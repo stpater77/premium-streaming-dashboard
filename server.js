@@ -72,6 +72,57 @@ async function saveWatchEvent(action, title, service, filters, recommendation, n
   return result.rows[0];
 }
 
+function statusFromFeedbackAction(action) {
+  const normalized = String(action || "").toLowerCase();
+
+  if (normalized === "perfect pick") return "liked";
+  if (normalized === "more like this") return "reference";
+  if (normalized === "already watched") return "watched";
+  if (normalized === "not interested") return "rejected";
+  if (normalized === "too heavy") return "too_heavy";
+  if (normalized === "too long") return "too_long";
+
+  return "saved";
+}
+
+async function upsertSavedTitleFromFeedback(action, title, service, recommendation, note) {
+  if (!pool) {
+    return null;
+  }
+
+  const status = statusFromFeedbackAction(action);
+  const type = recommendation?.type || null;
+  const notes = note || recommendation?.why || null;
+  const moodTags = [];
+
+  if (recommendation?.mood && Array.isArray(recommendation.mood)) {
+    moodTags.push(...recommendation.mood);
+  }
+
+  const result = await pool.query(
+    `INSERT INTO saved_titles (title, service, type, status, mood_tags, notes, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, NOW())
+     ON CONFLICT (title, service)
+     DO UPDATE SET
+       type = COALESCE(EXCLUDED.type, saved_titles.type),
+       status = EXCLUDED.status,
+       mood_tags = EXCLUDED.mood_tags,
+       notes = COALESCE(EXCLUDED.notes, saved_titles.notes),
+       updated_at = NOW()
+     RETURNING id, title, service, type, status, mood_tags, notes, updated_at`,
+    [
+      title,
+      service || null,
+      type,
+      status,
+      moodTags,
+      notes
+    ]
+  );
+
+  return result.rows[0];
+}
+
 
 function fetchWithTimeout(url, options = {}, timeoutMs = 90000) {
   const controller = new AbortController();
@@ -769,6 +820,56 @@ app.get("/api/dashboard-history", async (req, res) => {
 });
 
 
+
+// Read saved titles / watchlist from Postgres.
+app.get("/api/saved-titles", async (req, res) => {
+  try {
+    if (!pool) {
+      return res.status(500).json({
+        ok: false,
+        error: "Database is not configured."
+      });
+    }
+
+    const result = await pool.query(
+      `SELECT
+         id,
+         created_at,
+         updated_at,
+         title,
+         service,
+         type,
+         status,
+         mood_tags,
+         notes
+       FROM saved_titles
+       ORDER BY updated_at DESC
+       LIMIT 100`
+    );
+
+    const grouped = result.rows.reduce((acc, row) => {
+      const status = row.status || "saved";
+      if (!acc[status]) acc[status] = [];
+      acc[status].push(row);
+      return acc;
+    }, {});
+
+    res.json({
+      ok: true,
+      count: result.rows.length,
+      titles: result.rows,
+      grouped
+    });
+  } catch (error) {
+    console.error("Failed to read saved titles:", error);
+    res.status(500).json({
+      ok: false,
+      error: "Failed to read saved titles."
+    });
+  }
+});
+
+
 // Secure Hermes feedback and memory proxy.
 // Browser sends feedback here. This server asks Hermes to remember durable preferences.
 // The Hermes key is never sent to the browser.
@@ -798,10 +899,18 @@ app.post("/api/premium/feedback", async (req, res) => {
     }
 
     let savedWatchEvent = null;
+    let savedTitle = null;
+
     try {
       savedWatchEvent = await saveWatchEvent(action, title, service, filters, recommendation, note);
     } catch (dbError) {
       console.error("Failed to save watch event:", dbError);
+    }
+
+    try {
+      savedTitle = await upsertSavedTitleFromFeedback(action, title, service, recommendation, note);
+    } catch (dbError) {
+      console.error("Failed to upsert saved title:", dbError);
     }
 
     const prompt = `
@@ -901,7 +1010,8 @@ Return this JSON shape exactly:
       ok: true,
       feedback: parsed,
       raw_response: raw,
-      saved_watch_event: savedWatchEvent
+      saved_watch_event: savedWatchEvent,
+      saved_title: savedTitle
     });
   } catch (err) {
     console.error("Hermes feedback proxy error:", err);
