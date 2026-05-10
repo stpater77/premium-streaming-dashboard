@@ -705,17 +705,6 @@
         </article>
       </div>
     </section>
-
-    <section class="memory" aria-label="Local preference memory">
-      <h2>Local Preference Memory</h2>
-      <p class="summary">
-        This memory stays in this browser only. It does not sync between phone and computer yet.
-      </p>
-      <div class="memory-list" id="memoryList"></div>
-      <div class="actions">
-        <button id="clearMemoryButton" class="black">Clear Local Memory</button>
-      </div>
-    </section>
   </main>
 
   <script>
@@ -955,7 +944,6 @@
       }
     });
 
-    renderMemory();
     }
 
     function getFilters() {
@@ -1589,7 +1577,6 @@
     document.querySelectorAll("select").forEach(select => {
       select.addEventListener("change", renderRecommendations);
     });
-    renderMemory();
     renderRecommendations();
     loadRecentlyWatched();
     loadSavedTitles();
