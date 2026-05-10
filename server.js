@@ -286,7 +286,8 @@ Return this JSON shape exactly:
             content: prompt
           }
         ],
-        temperature: 0.2
+        temperature: 0.2,
+        max_tokens: 900
       })
     }, 120000);
 
@@ -396,15 +397,17 @@ Goal:
 Return fast, practical premium streaming suggestions based on Sean's selected filters.
 
 Rules:
-- Prioritize speed.
+- Prioritize speed over verification.
 - Return only 3 recommendations: best_pick, backup_pick, quick_pick.
-- Do not perform broad web exploration. Use at most one targeted web search only if needed.
-- Do not deeply verify every title. If unsure, provide a service search URL and cautious availability note.
-- Prefer likely matches from memory, general knowledge, and the optional curated title list.
+- Do not use web_search, web_extract, browser, microsoft365, todo, or any external tool.
+- Do not verify streaming availability.
+- Do not browse or search.
+- Use general knowledge, Hermes memory if already available, local browser memory, and the optional curated title list.
+- If uncertain, provide an official service search URL and a cautious availability note.
 - If you know or can quickly infer a direct official service page, include it in service_url.
 - If not, use an official service search URL for the title.
 - Do not claim direct access to Sean's private streaming accounts.
-- Availability wording must be cautious: say "likely available", "service page/search link provided", or "check account availability".
+- Availability wording must be cautious: say "not verified", "service search link provided", or "check account availability".
 - Use Hermes long-term memory if available.
 - If you infer a durable user preference, include it in memory_to_save.
 - Return JSON only. No markdown. No surrounding explanation.
@@ -473,7 +476,8 @@ Return this JSON shape exactly:
             content: prompt
           }
         ],
-        temperature: 0.2
+        temperature: 0.2,
+        max_tokens: 900
       })
     }, 75000);
 
