@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Premium Streaming Dashboard</title>
+  <style>
+    :root {
+      --orange: #fb923c;
+      --turquoise: #008e97;
+      --turquoise-dark: #006f78;
+      --cream: #fff7ed;
+      --cream-deep: #ffedd5;
+      --black: #111827;
+      --muted: #6b7280;
+      --border: rgba(17, 24, 39, 0.14);
+      --shadow: 0 18px 45px rgba(17, 24, 39, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--black);
+      background: var(--orange);
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background: #fb923c;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 56px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .button,
+    .link-button,
+    button {
+      appearance: none;
+      border: 1px solid var(--turquoise);
+      background: var(--turquoise);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 999px;
+      padding: 11px 16px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(0, 142, 151, 0.22);
+    }
+
+    .button:hover,
+    .link-button:hover,
+    button:hover {
+      background: var(--turquoise-dark);
+      border-color: var(--turquoise-dark);
+    }
+
+    .checked {
+      background: rgba(255, 247, 237, 0.88);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 700;
+      color: #374151;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.8fr);
+      gap: 20px;
+      margin-bottom: 22px;
+    }
+
+    .intro,
+    .brief,
+    .controls,
+    .results,
+    .memory,
+    .card {
+      background: var(--cream);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .intro {
+      padding: 34px;
+    }
+
+    .brief {
+      padding: 24px;
+    }
+
+    .eyebrow {
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.76rem;
+      color: var(--turquoise-dark);
+      font-weight: 900;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 5vw, 4.6rem);
+      line-height: 0.95;
+      margin: 0 0 16px;
+      letter-spacing: -0.055em;
+    }
+
+    h2,
+    h3 {
+      margin-top: 0;
+      letter-spacing: -0.03em;
+    }
+
+    .lede {
+      font-size: 1.08rem;
+      line-height: 1.65;
+      color: #374151;
+      max-width: 820px;
+      margin: 0;
+    }
+
+    .brief p {
+      line-height: 1.55;
+      color: #374151;
+      margin: 0;
+    }
+
+    .controls {
+      padding: 22px;
+      margin-bottom: 22px;
+    }
+
+    .control-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(140px, 1fr));
+      gap: 14px;
+    }
+
+    .control {
+      background: var(--cream-deep);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 900;
+      color: #6b3f20;
+      margin-bottom: 8px;
+    }
+
+    select {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      background: #fffaf3;
+      color: var(--black);
+      font-weight: 750;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .results {
+      padding: 24px;
+      margin-bottom: 22px;
+    }
+
+    .results-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 16px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .summary {
+      color: #4b5563;
+      line-height: 1.5;
+      margin: 4px 0 0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 280px;
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .tag-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      display: inline-flex;
+      background: var(--cream-deep);
+      border: 1px solid var(--border);
+      color: #6b3f20;
+      border-radius: 999px;
+      padding: 6px 9px;
+      font-size: 0.74rem;
+      font-weight: 900;
+    }
+
+    .service {
+      background: var(--turquoise);
+      color: #fff;
+      border-color: var(--turquoise);
+    }
+
+    .why,
+    .meta,
+    .avoid {
+      color: #374151;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .avoid {
+      font-size: 0.9rem;
+      color: #7c2d12;
+    }
+
+    .pick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: auto;
+    }
+
+    .pick-actions button,
+    .pick-actions a {
+      font-size: 0.86rem;
+      padding: 9px 11px;
+      box-shadow: none;
+    }
+
+    .black {
+      background: #000 !important;
+      border-color: #000 !important;
+      color: #fff !important;
+    }
+
+    .memory {
+      padding: 22px;
+    }
+
+    .memory-list {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .memory-pill {
+      background: var(--cream-deep);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-weight: 800;
+      color: #374151;
+    }
+
+    .empty {
+      padding: 22px;
+      background: var(--cream-deep);
+      border-radius: 18px;
+      color: #374151;
+      font-weight: 750;
+    }
+
+    @media (max-width: 940px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+
+      .control-grid,
+      .grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .control-grid,
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .intro {
+        padding: 24px;
+      }
+    }
+  
+    .hermes-card {
+      background: #fff7ed;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      grid-column: 1 / -1;
+    }
+
+    .hermes-card pre {
+      white-space: pre-wrap;
+      background: #ffedd5;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      overflow-x: auto;
+      line-height: 1.45;
+    }
+
+  
+    .hermes-pick {
+      background: #ffedd5;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+      margin: 12px 0;
+    }
+
+    .hermes-pick h3 {
+      margin-bottom: 10px;
+    }
+
+  
+    .feedback-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .feedback-row button {
+      font-size: 0.82rem;
+      padding: 8px 10px;
+      box-shadow: none;
+    }
+
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="topbar">
+      <a class="button" href="/">Premium Streaming Dashboard</a>
+      <div class="checked">Premium section · Local memory only · Beginner-safe</div>
+    </div>
+
+    <section class="hero">
+      <div class="intro">
+        <div class="eyebrow">Premium Streaming Dashboard</div>
+        <h1>Pick the right thing faster.</h1>
+        <p class="lede">
+          A customizable premium streaming picker for services you already pay for.
+          Choose mood, time, energy, service, format, and intensity. The page suggests
+          a best pick, backups, comfort watches, and wildcard options.
+        </p>
+      </div>
+
+      <aside class="brief">
+        <h2>How this works</h2>
+        <p>
+          This first version uses a curated list stored in this file. It does not log in
+          to your streaming accounts or check live availability yet. It remembers likes,
+          dislikes, and watched titles locally in this browser.
+        </p>
+      </aside>
+    </section>
+
+    <section class="controls" aria-label="Premium streaming controls">
+      <div class="control-grid">
+        <div class="control">
+          <label for="serviceSelect">Service</label>
+          <select id="serviceSelect">
+            <option value="any" selected>Any Service</option>
+            <option value="Netflix">Netflix</option>
+            <option value="Prime Video">Prime Video</option>
+            <option value="Max">Max</option>
+            <option value="Hulu">Hulu</option>
+            <option value="Disney+">Disney+</option>
+            <option value="Apple TV+">Apple TV+</option>
+            <option value="Paramount+">Paramount+</option>
+            <option value="Peacock">Peacock</option>
+            <option value="YouTube TV">YouTube TV</option>
+          </select>
+        </div>
+
+        <div class="control">
+          <label for="moodSelect">Mood</label>
+          <select id="moodSelect">
+            <option value="any" selected>Any Mood</option>
+            <option value="relaxed">Relaxed</option>
+            <option value="funny">Funny</option>
+            <option value="suspenseful">Suspenseful</option>
+            <option value="smart">Smart</option>
+            <option value="emotional">Emotional</option>
+            <option value="inspiring">Inspiring</option>
+            <option value="dark">Dark</option>
+            <option value="background">Background Watch</option>
+          </select>
+        </div>
+
+        <div class="control">
+          <label for="timeSelect">Time</label>
+          <select id="timeSelect">
+            <option value="any" selected>Any Time</option>
+            <option value="30">30 Min Or Less</option>
+            <option value="45">45 Min Or Less</option>
+            <option value="90">90 Min Or Less</option>
+            <option value="120">2 Hours Or Less</option>
+            <option value="999">2+ Hours</option>
+          </select>
+        </div>
+
+        <div class="control">
+          <label for="energySelect">Energy</label>
+          <select id="energySelect">
+            <option value="any" selected>Any Energy</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+
+        <div class="control">
+          <label for="typeSelect">Format</label>
+          <select id="typeSelect">
+            <option value="any" selected>Any Format</option>
+            <option value="Movie">Movie</option>
+            <option value="Series">Series</option>
+            <option value="Documentary">Documentary</option>
+            <option value="Stand-Up">Stand-Up</option>
+            <option value="Sports">Sports</option>
+          </select>
+        </div>
+
+        <div class="control">
+          <label for="intensitySelect">Intensity</label>
+          <select id="intensitySelect">
+            <option value="any" selected>Any Intensity</option>
+            <option value="light">Light</option>
+            <option value="medium">Medium</option>
+            <option value="heavy">Heavy</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="recommendButton">Suggest Picks</button>
+        <button id="hermesFastButton">Ask Hermes Fast</button>
+        <button id="hermesButton">Ask Hermes Deep Think</button>
+        <button id="resetButton" class="black">Reset Filters</button>
+      </div>
+    </section>
+
+    <section class="results" aria-label="Premium streaming recommendations">
+      <div class="results-head">
+        <div>
+          <h2>Your Premium Picks</h2>
+          <p class="summary" id="summaryText">Choose filters, then generate suggestions.</p>
+        </div>
+      </div>
+
+      <div class="grid" id="resultsGrid"></div>
+    </section>
+
+    <section class="results" id="hermesPanel" aria-label="Hermes recommendations">
+      <div class="results-head">
+        <div>
+          <h2>Hermes Recommendation</h2>
+          <p class="summary" id="hermesStatus">Hermes recommendations will appear here after you click Ask Hermes.</p>
+        </div>
+      </div>
+      <div class="grid" id="hermesGrid"></div>
+    </section>
+
+    <section class="memory" aria-label="Local preference memory">
+      <h2>Local Preference Memory</h2>
+      <p class="summary">
+        This memory stays in this browser only. It does not sync between phone and computer yet.
+      </p>
+      <div class="memory-list" id="memoryList"></div>
+      <div class="actions">
+        <button id="clearMemoryButton" class="black">Clear Local Memory</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const titles = [
+      {
+        title: "The Diplomat",
+        service: "Netflix",
+        type: "Series",
+        mood: ["smart", "suspenseful"],
+        time: 50,
+        energy: "medium",
+        intensity: "medium",
+        bucket: "Smart Series Pick",
+        why: "Good when you want political tension, smart dialogue, and a show that feels adult without being too heavy.",
+        avoidIf: "Skip if you want pure comedy or something visually quiet.",
+        search: "https://www.netflix.com/search?q=The%20Diplomat"
+      },
+      {
+        title: "Drive To Survive",
+        service: "Netflix",
+        type: "Documentary",
+        mood: ["suspenseful", "background"],
+        time: 45,
+        energy: "medium",
+        intensity: "medium",
+        bucket: "Momentum Pick",
+        why: "A strong sports/business hybrid when you want speed, stakes, personalities, and boardroom drama.",
+        avoidIf: "Skip if you are tired of reality-doc editing.",
+        search: "https://www.netflix.com/search?q=Drive%20To%20Survive"
+      },
+      {
+        title: "Reacher",
+        service: "Prime Video",
+        type: "Series",
+        mood: ["suspenseful"],
+        time: 50,
+        energy: "medium",
+        intensity: "medium",
+        bucket: "Action Series Pick",
+        why: "Clean action, investigation, and low-friction pacing. Good when you want suspense without overthinking.",
+        avoidIf: "Skip if you want quiet or emotional.",
+        search: "https://www.amazon.com/s?k=Reacher&i=instant-video"
+      },
+      {
+        title: "Air",
+        service: "Prime Video",
+        type: "Movie",
+        mood: ["inspiring", "smart"],
+        time: 112,
+        energy: "medium",
+        intensity: "light",
+        bucket: "Business Movie Pick",
+        why: "A strong founder/operator story about taste, conviction, negotiation, and brand-building.",
+        avoidIf: "Skip if you want action or suspense.",
+        search: "https://www.amazon.com/s?k=Air&i=instant-video"
+      },
+      {
+        title: "The Last Of Us",
+        service: "Max",
+        type: "Series",
+        mood: ["emotional", "dark"],
+        time: 60,
+        energy: "high",
+        intensity: "heavy",
+        bucket: "Heavy Prestige Pick",
+        why: "A high-quality emotional survival story. Best when you want depth and can handle a heavier tone.",
+        avoidIf: "Skip late at night or when you want comfort.",
+        search: "https://www.max.com/search?q=The%20Last%20Of%20Us"
+      },
+      {
+        title: "Curb Your Enthusiasm",
+        service: "Max",
+        type: "Series",
+        mood: ["funny", "relaxed"],
+        time: 30,
+        energy: "low",
+        intensity: "light",
+        bucket: "Comedy Exit Ramp",
+        why: "Short, funny, and easy to stop after one episode. Good when you want a clean finish line.",
+        avoidIf: "Skip if awkward comedy annoys you.",
+        search: "https://www.max.com/search?q=Curb%20Your%20Enthusiasm"
+      },
+      {
+        title: "Only Murders In The Building",
+        service: "Hulu",
+        type: "Series",
+        mood: ["funny", "suspenseful"],
+        time: 35,
+        energy: "low",
+        intensity: "light",
+        bucket: "Light Mystery Pick",
+        why: "A comfortable mystery-comedy with enough plot to hold attention but not enough darkness to drag you down.",
+        avoidIf: "Skip if you want gritty crime.",
+        search: "https://www.hulu.com/search?q=Only%20Murders%20In%20The%20Building"
+      },
+      {
+        title: "The Bear",
+        service: "Hulu",
+        type: "Series",
+        mood: ["smart", "emotional"],
+        time: 35,
+        energy: "high",
+        intensity: "heavy",
+        bucket: "High-Energy Prestige Pick",
+        why: "Excellent when you want intensity, craft, ambition, and short episodes that still hit hard.",
+        avoidIf: "Skip if you want calm background watching.",
+        search: "https://www.hulu.com/search?q=The%20Bear"
+      },
+      {
+        title: "The Imagineering Story",
+        service: "Disney+",
+        type: "Documentary",
+        mood: ["inspiring", "smart"],
+        time: 60,
+        energy: "medium",
+        intensity: "light",
+        bucket: "Creative Systems Pick",
+        why: "Good for learning how creative teams build experiences, brands, and operational magic at scale.",
+        avoidIf: "Skip if you want drama or edge.",
+        search: "https://www.disneyplus.com/search?q=The%20Imagineering%20Story"
+      },
+      {
+        title: "Andor",
+        service: "Disney+",
+        type: "Series",
+        mood: ["smart", "suspenseful"],
+        time: 45,
+        energy: "medium",
+        intensity: "medium",
+        bucket: "Smart Sci-Fi Pick",
+        why: "More political thriller than simple franchise content. Good for suspense and world-building.",
+        avoidIf: "Skip if you want light comfort.",
+        search: "https://www.disneyplus.com/search?q=Andor"
+      },
+      {
+        title: "Ted Lasso",
+        service: "Apple TV+",
+        type: "Series",
+        mood: ["funny", "inspiring", "relaxed"],
+        time: 35,
+        energy: "low",
+        intensity: "light",
+        bucket: "Comfort Pick",
+        why: "Warm, funny, and emotionally easy to enter. Good when you want something that improves the room.",
+        avoidIf: "Skip if you want suspense or edge.",
+        search: "https://tv.apple.com/search?term=Ted%20Lasso"
+      },
+      {
+        title: "Slow Horses",
+        service: "Apple TV+",
+        type: "Series",
+        mood: ["smart", "suspenseful"],
+        time: 45,
+        energy: "medium",
+        intensity: "medium",
+        bucket: "Spy Pick",
+        why: "Sharp, funny, cynical spy drama with strong pacing and character texture.",
+        avoidIf: "Skip if you want polished heroics.",
+        search: "https://tv.apple.com/search?term=Slow%20Horses"
+      },
+      {
+        title: "Tulsa King",
+        service: "Paramount+",
+        type: "Series",
+        mood: ["funny", "suspenseful"],
+        time: 45,
+        energy: "medium",
+        intensity: "medium",
+        bucket: "Crime Comfort Pick",
+        why: "A lighter crime-drama lane with personality, fish-out-of-water comedy, and gangster energy.",
+        avoidIf: "Skip if you want serious prestige drama.",
+        search: "https://www.paramountplus.com/search/?query=Tulsa%20King"
+      },
+      {
+        title: "Yellowstone",
+        service: "Paramount+",
+        type: "Series",
+        mood: ["suspenseful", "emotional"],
+        time: 60,
+        energy: "medium",
+        intensity: "medium",
+        bucket: "Family Power Drama",
+        why: "Useful when you want land, power, loyalty, conflict, and big soap-operatic stakes.",
+        avoidIf: "Skip if you want short or light.",
+        search: "https://www.paramountplus.com/search/?query=Yellowstone"
+      },
+      {
+        title: "Poker Face",
+        service: "Peacock",
+        type: "Series",
+        mood: ["funny", "smart"],
+        time: 55,
+        energy: "medium",
+        intensity: "light",
+        bucket: "Case-Of-The-Week Pick",
+        why: "Mystery structure, charm, and standalone episodes make it easy to watch without a huge commitment.",
+        avoidIf: "Skip if you want serialized intensity.",
+        search: "https://www.peacocktv.com/search?q=Poker%20Face"
+      },
+      {
+        title: "Premier League / Live Sports",
+        service: "YouTube TV",
+        type: "Sports",
+        mood: ["background", "relaxed"],
+        time: 120,
+        energy: "low",
+        intensity: "light",
+        bucket: "Live Background Pick",
+        why: "Best when you want something current, easy to enter, and not scripted.",
+        avoidIf: "Skip if you want narrative closure.",
+        search: "https://tv.youtube.com/"
+      }
+    ];
+
+    const memoryKey = "premiumStreamingMemory.v1";
+
+    function getMemory() {
+      try {
+        return JSON.parse(localStorage.getItem(memoryKey)) || { liked: [], disliked: [], watched: [] };
+      } catch {
+        return { liked: [], disliked: [], watched: [] };
+      }
+    }
+
+    function saveMemory(memory) {
+      localStorage.setItem(memoryKey, JSON.stringify(memory));
+      renderMemory();
+    }
+
+    function getFilters() {
+      return {
+        service: document.getElementById("serviceSelect").value,
+        mood: document.getElementById("moodSelect").value,
+        time: document.getElementById("timeSelect").value,
+        energy: document.getElementById("energySelect").value,
+        type: document.getElementById("typeSelect").value,
+        intensity: document.getElementById("intensitySelect").value
+      };
+    }
+
+    function scoreTitle(item, filters, memory) {
+      let score = 0;
+
+      if (filters.service === "any" || item.service === filters.service) score += 3;
+      if (filters.mood === "any" || item.mood.includes(filters.mood)) score += 3;
+      if (filters.energy === "any" || item.energy === filters.energy) score += 2;
+      if (filters.type === "any" || item.type === filters.type) score += 2;
+      if (filters.intensity === "any" || item.intensity === filters.intensity) score += 2;
+
+      if (filters.time === "any") {
+        score += 1;
+      } else {
+        const max = Number(filters.time);
+        if (max === 999 && item.time > 120) score += 2;
+        else if (item.time <= max) score += 2;
+      }
+
+      if (memory.liked.includes(item.title)) score += 3;
+      if (memory.watched.includes(item.title)) score -= 1;
+      if (memory.disliked.includes(item.title)) score -= 5;
+
+      return score;
+    }
+
+    function renderRecommendations() {
+      const filters = getFilters();
+      const memory = getMemory();
+
+      const ranked = titles
+        .map(item => ({ ...item, score: scoreTitle(item, filters, memory) }))
+        .filter(item => item.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 6);
+
+      const grid = document.getElementById("resultsGrid");
+      const summary = document.getElementById("summaryText");
+
+      const activeFilters = Object.entries(filters)
+        .filter(([_, value]) => value !== "any")
+        .map(([key, value]) => `${key}: ${value}`)
+        .join(" · ");
+
+      summary.textContent = activeFilters
+        ? `Filtered by ${activeFilters}. Showing best matches from your curated premium list.`
+        : "Showing flexible premium picks from your curated list.";
+
+      if (!ranked.length) {
+        grid.innerHTML = `<div class="empty">No strong match yet. Try loosening one filter or adding more titles to the curated list.</div>`;
+        return;
+      }
+
+      grid.innerHTML = ranked.map(item => `
+        <article class="card">
+          <div class="card-top">
+            <div>
+              <h3>${item.title}</h3>
+              <div class="tag-row">
+                <span class="tag service">${item.service}</span>
+                <span class="tag">${item.type}</span>
+                <span class="tag">${item.time} Min</span>
+                <span class="tag">${item.intensity}</span>
+              </div>
+            </div>
+          </div>
+          <p class="meta"><strong>${item.bucket}</strong></p>
+          <p class="why">${item.why}</p>
+          <p class="avoid"><strong>Avoid If:</strong> ${item.avoidIf}</p>
+          <div class="pick-actions">
+            <a class="link-button" href="${item.search}" target="_blank" rel="noopener noreferrer">Search</a>
+            <button data-action="liked" data-title="${item.title}">Like</button>
+            <button data-action="watched" data-title="${item.title}">Watched</button>
+            <button class="black" data-action="disliked" data-title="${item.title}">Not Interested</button>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function updateMemory(action, title) {
+      const memory = getMemory();
+
+      for (const key of ["liked", "disliked", "watched"]) {
+        memory[key] = memory[key].filter(item => item !== title);
+      }
+
+      memory[action].push(title);
+      saveMemory(memory);
+      renderRecommendations();
+    }
+
+
+    function getCuratedTitlesForHermes() {
+      return titles.map(item => ({
+        title: item.title,
+        service: item.service,
+        type: item.type,
+        mood: item.mood,
+        time: item.time,
+        energy: item.energy,
+        intensity: item.intensity,
+        bucket: item.bucket,
+        why: item.why,
+        avoidIf: item.avoidIf
+      }));
+    }
+
+
+    let lastHermesRecommendation = null;
+
+    function serviceSearchUrl(service, title) {
+      const q = encodeURIComponent(title || "");
+      const normalized = (service || "").toLowerCase();
+
+      if (normalized.includes("netflix")) return `https://www.netflix.com/search?q=${q}`;
+      if (normalized.includes("prime")) return `https://www.amazon.com/s?k=${q}&i=instant-video`;
+      if (normalized.includes("max")) return `https://www.max.com/search?q=${q}`;
+      if (normalized.includes("hulu")) return `https://www.hulu.com/search?q=${q}`;
+      if (normalized.includes("disney")) return `https://www.disneyplus.com/search?q=${q}`;
+      if (normalized.includes("apple")) return `https://tv.apple.com/search?term=${q}`;
+      if (normalized.includes("paramount")) return `https://www.paramountplus.com/search/?query=${q}`;
+      if (normalized.includes("peacock")) return `https://www.peacocktv.com/search?q=${q}`;
+      if (normalized.includes("youtube")) return `https://tv.youtube.com/`;
+
+      return `https://www.google.com/search?q=${encodeURIComponent(`${title || ""} ${service || ""} streaming`)}`;
+    }
+
+    function safeUrlFromPick(pick) {
+      if (pick && pick.service_url && /^https?:\/\//i.test(pick.service_url)) {
+        return pick.service_url;
+      }
+      return serviceSearchUrl(pick?.service, pick?.title);
+    }
+
+    async function sendHermesFeedback(action, pick) {
+      const status = document.getElementById("hermesStatus");
+
+      if (!pick || !pick.title) {
+        status.textContent = "No title found for feedback.";
+        return;
+      }
+
+      status.textContent = `Sending feedback to Hermes: ${action} / ${pick.title}`;
+
+      try {
+        const response = await fetch("/api/premium/feedback", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            action,
+            title: pick.title,
+            service: pick.service || "",
+            filters: getFilters(),
+            recommendation: lastHermesRecommendation || {},
+            note: ""
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+          status.textContent = "Hermes feedback failed.";
+          alert(`Hermes feedback failed: ${JSON.stringify(data, null, 2)}`);
+          return;
+        }
+
+        const saved = data.feedback?.memory_saved || data.raw_response || "Feedback sent to Hermes.";
+        status.textContent = `Hermes memory updated: ${saved}`;
+      } catch (error) {
+        status.textContent = "Hermes feedback request failed.";
+        alert(String(error));
+      }
+    }
+
+
+    async function askHermes(mode = "deep") {
+      const button = mode === "fast" ? document.getElementById("hermesFastButton") : document.getElementById("hermesButton");
+      const status = document.getElementById("hermesStatus");
+      const grid = document.getElementById("hermesGrid");
+
+      button.disabled = true;
+      button.textContent = mode === "fast" ? "Asking Hermes Fast..." : "Deep Thinking...";
+      status.textContent = mode === "fast" ? "Contacting Hermes Fast through the secure server proxy..." : "Contacting Hermes Deep Think through the secure server proxy...";
+      grid.innerHTML = "";
+
+      try {
+        const endpoint = mode === "fast" ? "/api/premium/recommend-fast" : "/api/premium/recommend";
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            filters: getFilters(),
+            localMemory: getMemory(),
+            availableTitles: getCuratedTitlesForHermes()
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+          status.textContent = "Hermes request failed.";
+          grid.innerHTML = `
+            <article class="hermes-card">
+              <h3>Error</h3>
+              <pre>${JSON.stringify(data, null, 2)}</pre>
+            </article>
+          `;
+          return;
+        }
+
+        const rec = data.recommendation;
+        lastHermesRecommendation = rec || null;
+
+        if (rec) {
+          status.textContent = "Hermes returned real-time discovery recommendations.";
+
+          const renderPick = (label, pick) => {
+            if (!pick) return `<p><strong>${label}:</strong> Not provided</p>`;
+
+            if (typeof pick === "string") {
+              return `<p><strong>${label}:</strong> ${pick}</p>`;
+            }
+
+            const encoded = encodeURIComponent(JSON.stringify(pick));
+            const openUrl = safeUrlFromPick(pick);
+            const serviceLabel = pick.service ? `Open On ${pick.service}` : "Open Service Search";
+
+            return `
+              <div class="hermes-pick">
+                <h3>${label}: ${pick.title || "Untitled"}</h3>
+                <p><strong>Service:</strong> ${pick.service || "Not specified"}</p>
+                <p><strong>Type:</strong> ${pick.type || "Not specified"}</p>
+                <p><strong>Runtime:</strong> ${pick.runtime_estimate || "Not specified"}</p>
+                <p><strong>Why:</strong> ${pick.why || "No explanation provided."}</p>
+                <p><strong>Availability:</strong> ${pick.availability_note || "Not verified."}</p>
+                <p><strong>Confidence:</strong> ${pick.confidence || "Not stated."}</p>
+                <div class="pick-actions">
+                  <a class="link-button" href="${openUrl}" target="_blank" rel="noopener noreferrer">${serviceLabel}</a>
+                </div>
+                <div class="feedback-row">
+                  <button data-hermes-feedback="Perfect Pick" data-pick="${encoded}">Perfect Pick</button>
+                  <button data-hermes-feedback="Too Heavy" data-pick="${encoded}">Too Heavy</button>
+                  <button data-hermes-feedback="Too Long" data-pick="${encoded}">Too Long</button>
+                  <button data-hermes-feedback="Already Watched" data-pick="${encoded}">Already Watched</button>
+                  <button class="black" data-hermes-feedback="Not Interested" data-pick="${encoded}">Not Interested</button>
+                  <button data-hermes-feedback="More Like This" data-pick="${encoded}">More Like This</button>
+                </div>
+              </div>
+            `;
+          };
+
+          const backupHtml = Array.isArray(rec.backup_picks)
+            ? rec.backup_picks.map((pick, index) => renderPick(`Backup ${index + 1}`, pick)).join("")
+            : renderPick("Backup", rec.backup_pick || rec.backup_picks);
+
+          grid.innerHTML = `
+            <article class="hermes-card">
+              ${renderPick("Best Pick", rec.best_pick)}
+              ${backupHtml}
+              ${renderPick("Quick Pick", rec.quick_pick)}
+              ${renderPick("Comfort Pick", rec.comfort_pick)}
+              ${renderPick("Wild Card", rec.wild_card)}
+              <p><strong>Search Summary:</strong> ${rec.search_summary || "No search summary provided."}</p>
+              <p><strong>Avoid:</strong> ${rec.avoid || "No avoid note provided."}</p>
+              <p><strong>Memory Used:</strong> ${(rec.memory_used || []).join("; ") || "None listed."}</p>
+              <p><strong>Memory To Save:</strong> ${(rec.memory_to_save || []).join("; ") || "None listed."}</p>
+            </article>
+          `;
+        } else {
+          status.textContent = "Hermes responded, but not as structured JSON.";
+          grid.innerHTML = `
+            <article class="hermes-card">
+              <h3>Raw Hermes Response</h3>
+              <pre>${data.raw_response || "No raw response returned."}</pre>
+            </article>
+          `;
+        }
+      } catch (error) {
+        status.textContent = "Hermes request failed before reaching the server.";
+        grid.innerHTML = `
+          <article class="hermes-card">
+            <h3>Request Error</h3>
+            <pre>${String(error)}</pre>
+          </article>
+        `;
+      } finally {
+        button.disabled = false;
+        button.textContent = mode === "fast" ? "Ask Hermes Fast" : "Ask Hermes Deep Think";
+      }
+    }
+
+    function renderMemory() {
+      const memory = getMemory();
+      const container = document.getElementById("memoryList");
+
+      const pills = [
+        ...memory.liked.map(title => `Liked: ${title}`),
+        ...memory.watched.map(title => `Watched: ${title}`),
+        ...memory.disliked.map(title => `Not Interested: ${title}`)
+      ];
+
+      container.innerHTML = pills.length
+        ? pills.map(text => `<span class="memory-pill">${text}</span>`).join("")
+        : `<span class="memory-pill">No local preferences saved yet.</span>`;
+    }
+
+    document.getElementById("recommendButton").addEventListener("click", renderRecommendations);
+
+    document.getElementById("hermesFastButton").addEventListener("click", () => askHermes("fast"));
+    document.getElementById("hermesButton").addEventListener("click", () => askHermes("deep"));
+
+    document.getElementById("resetButton").addEventListener("click", () => {
+      document.querySelectorAll("select").forEach(select => select.value = "any");
+      renderRecommendations();
+    });
+
+    document.getElementById("clearMemoryButton").addEventListener("click", () => {
+      localStorage.removeItem(memoryKey);
+      renderMemory();
+      renderRecommendations();
+    });
+
+    document.getElementById("resultsGrid").addEventListener("click", event => {
+      const button = event.target.closest("button[data-action]");
+      if (!button) return;
+      updateMemory(button.dataset.action, button.dataset.title);
+    });
+
+    document.getElementById("hermesGrid").addEventListener("click", event => {
+      const button = event.target.closest("button[data-hermes-feedback]");
+      if (!button) return;
+
+      try {
+        const pick = JSON.parse(decodeURIComponent(button.dataset.pick));
+        sendHermesFeedback(button.dataset.hermesFeedback, pick);
+      } catch (error) {
+        alert(`Could not read feedback target: ${String(error)}`);
+      }
+    });
+
+    document.querySelectorAll("select").forEach(select => {
+      select.addEventListener("change", renderRecommendations);
+    });
+
+    renderMemory();
+    renderRecommendations();
+  </script>
+</body>
+</html>
