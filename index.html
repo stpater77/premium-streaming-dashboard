@@ -1489,8 +1489,25 @@
       refreshHistoryButton.addEventListener("click", loadDashboardHistory);
     }
 
+    const refreshHistoryButton = document.getElementById("refreshHistoryButton");
+    if (refreshHistoryButton) {
+      refreshHistoryButton.addEventListener("click", loadDashboardHistory);
+    }
+
+    const refreshWatchlistButton = document.getElementById("refreshWatchlistButton");
+    if (refreshWatchlistButton) {
+      refreshWatchlistButton.addEventListener("click", loadSavedTitles);
+    }
+
+    const refreshRecentlyWatchedButton = document.getElementById("refreshRecentlyWatchedButton");
+    if (refreshRecentlyWatchedButton) {
+      refreshRecentlyWatchedButton.addEventListener("click", loadRecentlyWatched);
+    }
+
     renderMemory();
     renderRecommendations();
+    loadRecentlyWatched();
+    loadSavedTitles();
     loadDashboardHistory();
   </script>
 </body>
