@@ -398,8 +398,8 @@ Return fast, practical premium streaming suggestions based on Sean's selected fi
 Rules:
 - Prioritize speed.
 - Return only 3 recommendations: best_pick, backup_pick, quick_pick.
-- Do not perform broad web exploration.
-- Do not deeply verify every title.
+- Do not perform broad web exploration. Use at most one targeted web search only if needed.
+- Do not deeply verify every title. If unsure, provide a service search URL and cautious availability note.
 - Prefer likely matches from memory, general knowledge, and the optional curated title list.
 - If you know or can quickly infer a direct official service page, include it in service_url.
 - If not, use an official service search URL for the title.
@@ -475,7 +475,7 @@ Return this JSON shape exactly:
         ],
         temperature: 0.2
       })
-    }, 45000);
+    }, 75000);
 
     if (!chatResp.ok) {
       const text = await chatResp.text();
@@ -540,7 +540,7 @@ Return this JSON shape exactly:
     if (err && err.name === "AbortError") {
       return res.status(504).json({
         ok: false,
-        error: "Hermes Fast took longer than 45 seconds. Try again or simplify the filters."
+        error: "Hermes Fast took longer than 75 seconds. Try again or simplify the filters."
       });
     }
 
