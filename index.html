@@ -389,6 +389,61 @@
       box-shadow: none;
     }
 
+  
+    .history-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .history-card {
+      background: #fff7ed;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .history-card.wide {
+      grid-column: 1 / -1;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .history-item {
+      background: #ffedd5;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px;
+      line-height: 1.35;
+    }
+
+    .history-item strong {
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .history-meta {
+      color: #6b7280;
+      font-size: 0.88rem;
+    }
+
+    @media (max-width: 940px) {
+      .history-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .history-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -524,6 +579,48 @@
         </div>
       </div>
       <div class="grid" id="hermesGrid"></div>
+    </section>
+
+    <section class="results" id="historyPanel" aria-label="Dashboard history">
+      <div class="results-head">
+        <div>
+          <h2>History & Memory Dashboard</h2>
+          <p class="summary" id="historyStatus">Recent saved recommendations and feedback from Postgres.</p>
+        </div>
+        <button id="refreshHistoryButton">Refresh History</button>
+      </div>
+
+      <div class="history-grid">
+        <article class="history-card">
+          <h3>Top Services</h3>
+          <div id="topServicesList" class="history-list"></div>
+        </article>
+
+        <article class="history-card">
+          <h3>Top Moods</h3>
+          <div id="topMoodsList" class="history-list"></div>
+        </article>
+
+        <article class="history-card">
+          <h3>Perfect Picks</h3>
+          <div id="perfectPicksList" class="history-list"></div>
+        </article>
+
+        <article class="history-card">
+          <h3>Already Watched</h3>
+          <div id="alreadyWatchedList" class="history-list"></div>
+        </article>
+
+        <article class="history-card">
+          <h3>Not Interested</h3>
+          <div id="notInterestedList" class="history-list"></div>
+        </article>
+
+        <article class="history-card wide">
+          <h3>Recent Feedback Events</h3>
+          <div id="recentEventsList" class="history-list"></div>
+        </article>
+      </div>
     </section>
 
     <section class="memory" aria-label="Local preference memory">
@@ -1069,6 +1166,91 @@
       }
     }
 
+
+    function renderHistoryList(containerId, items, emptyText, formatter) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      if (!items || !items.length) {
+        container.innerHTML = `<div class="history-item">${emptyText}</div>`;
+        return;
+      }
+
+      container.innerHTML = items.map(formatter).join("");
+    }
+
+    function formatDate(value) {
+      if (!value) return "";
+      try {
+        return new Date(value).toLocaleString();
+      } catch {
+        return value;
+      }
+    }
+
+    async function loadDashboardHistory() {
+      const status = document.getElementById("historyStatus");
+
+      try {
+        status.textContent = "Loading saved history from Postgres...";
+
+        const response = await fetch("/api/dashboard-history");
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+          status.textContent = "Could not load dashboard history.";
+          return;
+        }
+
+        renderHistoryList(
+          "topServicesList",
+          data.top_services,
+          "No service history yet.",
+          item => `<div class="history-item"><strong>${item.service}</strong><span class="history-meta">${item.count} event(s)</span></div>`
+        );
+
+        renderHistoryList(
+          "topMoodsList",
+          data.top_moods,
+          "No mood history yet.",
+          item => `<div class="history-item"><strong>${item.mood}</strong><span class="history-meta">${item.count} event(s)</span></div>`
+        );
+
+        renderHistoryList(
+          "perfectPicksList",
+          data.perfect_picks,
+          "No perfect picks yet.",
+          item => `<div class="history-item"><strong>${item.title}</strong><span class="history-meta">${item.service} · ${item.count} time(s)</span></div>`
+        );
+
+        renderHistoryList(
+          "alreadyWatchedList",
+          data.already_watched,
+          "No already-watched titles yet.",
+          item => `<div class="history-item"><strong>${item.title}</strong><span class="history-meta">${item.service} · ${formatDate(item.last_event_at)}</span></div>`
+        );
+
+        renderHistoryList(
+          "notInterestedList",
+          data.not_interested,
+          "No rejected titles yet.",
+          item => `<div class="history-item"><strong>${item.title}</strong><span class="history-meta">${item.service} · ${formatDate(item.last_event_at)}</span></div>`
+        );
+
+        renderHistoryList(
+          "recentEventsList",
+          data.recent_events,
+          "No recent feedback events yet.",
+          item => `<div class="history-item"><strong>${item.action}: ${item.title}</strong><span class="history-meta">${item.service || "Unknown"} · mood: ${(item.filters && item.filters.mood) || "unknown"} · ${formatDate(item.created_at)}</span></div>`
+        );
+
+        status.textContent = "History loaded from Postgres.";
+      } catch (error) {
+        status.textContent = "History request failed.";
+      }
+    }
+
+
     function renderMemory() {
       const memory = getMemory();
       const container = document.getElementById("memoryList");
@@ -1122,8 +1304,14 @@
       select.addEventListener("change", renderRecommendations);
     });
 
+    const refreshHistoryButton = document.getElementById("refreshHistoryButton");
+    if (refreshHistoryButton) {
+      refreshHistoryButton.addEventListener("click", loadDashboardHistory);
+    }
+
     renderMemory();
     renderRecommendations();
+    loadDashboardHistory();
   </script>
 </body>
 </html>
