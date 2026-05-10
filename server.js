@@ -50,6 +50,28 @@ async function saveRecommendationRun(mode, filters, localMemory, hermesResponse)
   return result.rows[0];
 }
 
+async function saveWatchEvent(action, title, service, filters, recommendation, note) {
+  if (!pool) {
+    return null;
+  }
+
+  const result = await pool.query(
+    `INSERT INTO watch_events (action, title, service, filters, recommendation, note)
+     VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6)
+     RETURNING id, created_at`,
+    [
+      action,
+      title,
+      service || null,
+      JSON.stringify(filters || {}),
+      JSON.stringify(recommendation || {}),
+      note || null
+    ]
+  );
+
+  return result.rows[0];
+}
+
 
 function fetchWithTimeout(url, options = {}, timeoutMs = 90000) {
   const controller = new AbortController();
@@ -594,6 +616,47 @@ app.get("/api/recommendation-runs", async (req, res) => {
 });
 
 
+
+// Read recent feedback/watch events from Postgres.
+app.get("/api/watch-events", async (req, res) => {
+  try {
+    if (!pool) {
+      return res.status(500).json({
+        ok: false,
+        error: "Database is not configured."
+      });
+    }
+
+    const result = await pool.query(
+      `SELECT
+         id,
+         created_at,
+         action,
+         title,
+         service,
+         filters,
+         recommendation,
+         note
+       FROM watch_events
+       ORDER BY created_at DESC
+       LIMIT 25`
+    );
+
+    res.json({
+      ok: true,
+      count: result.rows.length,
+      events: result.rows
+    });
+  } catch (error) {
+    console.error("Failed to read watch events:", error);
+    res.status(500).json({
+      ok: false,
+      error: "Failed to read watch events."
+    });
+  }
+});
+
+
 // Secure Hermes feedback and memory proxy.
 // Browser sends feedback here. This server asks Hermes to remember durable preferences.
 // The Hermes key is never sent to the browser.
@@ -620,6 +683,13 @@ app.post("/api/premium/feedback", async (req, res) => {
         ok: false,
         error: "Missing required feedback fields: action and title."
       });
+    }
+
+    let savedWatchEvent = null;
+    try {
+      savedWatchEvent = await saveWatchEvent(action, title, service, filters, recommendation, note);
+    } catch (dbError) {
+      console.error("Failed to save watch event:", dbError);
     }
 
     const prompt = `
@@ -718,7 +788,8 @@ Return this JSON shape exactly:
     return res.json({
       ok: true,
       feedback: parsed,
-      raw_response: raw
+      raw_response: raw,
+      saved_watch_event: savedWatchEvent
     });
   } catch (err) {
     console.error("Hermes feedback proxy error:", err);
