@@ -553,22 +553,22 @@
       </div>
 
       <div class="actions">
-        <button id="recommendButton">Suggest Picks</button>
         <button id="hermesFastButton">Ask Hermes Fast</button>
         <button id="hermesButton">Ask Hermes Deep Think</button>
         <button id="resetButton" class="black">Reset Filters</button>
       </div>
     </section>
 
-    <section class="results" aria-label="Premium streaming recommendations">
+    <section class="results" id="recentlyWatchedPanel" aria-label="Recently watched titles">
       <div class="results-head">
         <div>
-          <h2>Your Premium Picks</h2>
-          <p class="summary" id="summaryText">Choose filters, then generate suggestions.</p>
+          <h2>Recently Watched</h2>
+          <p class="summary" id="recentlyWatchedStatus">Titles marked Already Watched will appear here.</p>
         </div>
+        <button id="refreshRecentlyWatchedButton">Refresh Recently Watched</button>
       </div>
 
-      <div class="grid" id="resultsGrid"></div>
+      <div class="history-list" id="recentlyWatchedList"></div>
     </section>
 
     <section class="results" id="hermesPanel" aria-label="Hermes recommendations">
@@ -1253,6 +1253,53 @@
       `).join("");
     }
 
+
+    async function loadRecentlyWatched() {
+      const status = document.getElementById("recentlyWatchedStatus");
+      const container = document.getElementById("recentlyWatchedList");
+
+      if (!status || !container) return;
+
+      try {
+        status.textContent = "Loading recently watched titles from Postgres...";
+
+        const response = await fetch("/api/saved-titles");
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+          status.textContent = "Could not load recently watched titles.";
+          container.innerHTML = `<div class="history-item">No recently watched titles loaded.</div>`;
+          return;
+        }
+
+        const watched = (data.grouped && data.grouped.watched) || [];
+
+        if (!watched.length) {
+          status.textContent = "No watched titles saved yet.";
+          container.innerHTML = `<div class="history-item">Click Already Watched under a Hermes result to add titles here.</div>`;
+          return;
+        }
+
+        container.innerHTML = watched.map(item => `
+          <div class="history-item">
+            <strong>${item.title}</strong>
+            <span class="history-meta">
+              ${item.service || "Unknown service"}
+              ${item.type ? ` · ${item.type}` : ""}
+              ${item.updated_at ? ` · ${formatDate(item.updated_at)}` : ""}
+            </span>
+            ${item.notes ? `<div class="history-meta">${item.notes}</div>` : ""}
+          </div>
+        `).join("");
+
+        status.textContent = `Loaded ${watched.length} recently watched title(s).`;
+      } catch (error) {
+        status.textContent = "Recently watched request failed.";
+        container.innerHTML = `<div class="history-item">Could not load recently watched titles.</div>`;
+      }
+    }
+
+
     async function loadSavedTitles() {
       const status = document.getElementById("watchlistStatus");
 
@@ -1361,7 +1408,10 @@
         : `<span class="memory-pill">No local preferences saved yet.</span>`;
     }
 
-    document.getElementById("recommendButton").addEventListener("click", renderRecommendations);
+    const recommendButton = document.getElementById("recommendButton");
+    if (recommendButton) {
+      recommendButton.addEventListener("click", renderRecommendations);
+    }
 
     document.getElementById("hermesFastButton").addEventListener("click", () => askHermes("fast"));
     document.getElementById("hermesButton").addEventListener("click", () => askHermes("deep"));
