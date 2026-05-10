@@ -1448,47 +1448,30 @@
       recommendButton.addEventListener("click", renderRecommendations);
     }
 
-    document.getElementById("hermesFastButton").addEventListener("click", () => askHermes("fast"));
-    document.getElementById("hermesButton").addEventListener("click", () => askHermes("deep"));
-
-    document.getElementById("resetButton").addEventListener("click", () => {
-      document.querySelectorAll("select").forEach(select => select.value = "any");
-      renderRecommendations();
-    });
-
-    document.getElementById("clearMemoryButton").addEventListener("click", () => {
-      localStorage.removeItem(memoryKey);
-      renderMemory();
-      renderRecommendations();
-    });
-
-    document.getElementById("resultsGrid").addEventListener("click", event => {
-      const button = event.target.closest("button[data-action]");
-      if (!button) return;
-      updateMemory(button.dataset.action, button.dataset.title);
-    });
-
-    document.getElementById("hermesGrid").addEventListener("click", event => {
-      const button = event.target.closest("button[data-hermes-feedback]");
-      if (!button) return;
-
-      try {
-        const pick = JSON.parse(decodeURIComponent(button.dataset.pick));
-        sendHermesFeedback(button.dataset.hermesFeedback, pick);
-      } catch (error) {
-        alert(`Could not read feedback target: ${String(error)}`);
-      }
-    });
-
-    document.querySelectorAll("select").forEach(select => {
-      select.addEventListener("change", renderRecommendations);
-    });
-
-    const refreshHistoryButton = document.getElementById("refreshHistoryButton");
-    if (refreshHistoryButton) {
-      refreshHistoryButton.addEventListener("click", loadDashboardHistory);
+    const hermesFastButton = document.getElementById("hermesFastButton");
+    if (hermesFastButton) {
+      hermesFastButton.addEventListener("click", () => askHermes("fast"));
     }
 
+    const hermesDeepButton = document.getElementById("hermesButton");
+    if (hermesDeepButton) {
+      hermesDeepButton.addEventListener("click", () => askHermes("deep"));
+    }
+
+    const hermesGrid = document.getElementById("hermesGrid");
+    if (hermesGrid) {
+      hermesGrid.addEventListener("click", event => {
+        const button = event.target.closest("button[data-hermes-feedback]");
+        if (!button) return;
+
+        try {
+          const pick = JSON.parse(decodeURIComponent(button.dataset.pick));
+          sendHermesFeedback(button.dataset.hermesFeedback, pick);
+        } catch (error) {
+          alert(`Could not read feedback target: ${String(error)}`);
+        }
+      });
+    }
     const refreshHistoryButton = document.getElementById("refreshHistoryButton");
     if (refreshHistoryButton) {
       refreshHistoryButton.addEventListener("click", loadDashboardHistory);
@@ -1504,6 +1487,9 @@
       refreshRecentlyWatchedButton.addEventListener("click", loadRecentlyWatched);
     }
 
+    document.querySelectorAll("select").forEach(select => {
+      select.addEventListener("change", renderRecommendations);
+    });
     renderMemory();
     renderRecommendations();
     loadRecentlyWatched();
