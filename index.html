@@ -659,6 +659,11 @@
         </article>
 
         <article class="history-card wide">
+          <h3>Recent Hermes Suggestions</h3>
+          <div id="recentRunsList" class="history-list"></div>
+        </article>
+
+        <article class="history-card wide">
           <h3>Recent Feedback Events</h3>
           <div id="recentEventsList" class="history-list"></div>
         </article>
@@ -1377,6 +1382,32 @@
           data.not_interested,
           "No rejected titles yet.",
           item => `<div class="history-item"><strong>${item.title}</strong><span class="history-meta">${item.service} · ${formatDate(item.last_event_at)}</span></div>`
+        );
+
+        renderHistoryList(
+          "recentRunsList",
+          data.recent_runs,
+          "No recent Hermes suggestion runs yet.",
+          item => {
+            const rec = item.hermes_response && item.hermes_response.recommendation;
+            const best = rec && rec.best_pick;
+            const backup = rec && (rec.backup_pick || (rec.backup_picks && rec.backup_picks[0]));
+            const quick = rec && rec.quick_pick;
+
+            return `
+              <div class="history-item">
+                <strong>${item.mode || "unknown"} run · ${formatDate(item.created_at)}</strong>
+                <span class="history-meta">
+                  service: ${(item.filters && item.filters.service) || "any"} ·
+                  mood: ${(item.filters && item.filters.mood) || "any"} ·
+                  type: ${(item.filters && item.filters.type) || "any"}
+                </span>
+                ${best && best.title ? `<div class="history-meta"><strong>Best:</strong> ${best.title} (${best.service || "Unknown"})</div>` : ""}
+                ${backup && backup.title ? `<div class="history-meta"><strong>Backup:</strong> ${backup.title} (${backup.service || "Unknown"})</div>` : ""}
+                ${quick && quick.title ? `<div class="history-meta"><strong>Quick:</strong> ${quick.title} (${quick.service || "Unknown"})</div>` : ""}
+              </div>
+            `;
+          }
         );
 
         renderHistoryList(
