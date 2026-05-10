@@ -957,6 +957,10 @@
       const grid = document.getElementById("resultsGrid");
       const summary = document.getElementById("summaryText");
 
+      if (!grid || !summary) {
+        return;
+      }
+
       const activeFilters = Object.entries(filters)
         .filter(([_, value]) => value !== "any")
         .map(([key, value]) => `${key}: ${value}`)
