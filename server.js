@@ -1,11 +1,34 @@
 const express = require("express");
 const path = require("path");
+const fs = require("fs");
+const { Pool } = require("pg");
 
 const app = express();
 
 const PORT = process.env.PORT || 3000;
 const HERMES_API_URL = process.env.HERMES_API_URL;
 const HERMES_API_KEY = process.env.HERMES_API_KEY;
+const DATABASE_URL = process.env.DATABASE_URL;
+
+const pool = DATABASE_URL
+  ? new Pool({
+      connectionString: DATABASE_URL,
+      ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false
+    })
+  : null;
+
+async function initializeDatabase() {
+  if (!pool) {
+    console.log("Postgres not configured; skipping database initialization.");
+    return;
+  }
+
+  const schemaPath = path.join(__dirname, "db", "schema.sql");
+  const schemaSql = fs.readFileSync(schemaPath, "utf8");
+
+  await pool.query(schemaSql);
+  console.log("Postgres schema initialized.");
+}
 
 
 function fetchWithTimeout(url, options = {}, timeoutMs = 90000) {
@@ -26,11 +49,24 @@ app.use(express.static(__dirname));
 
 
 // Basic health check.
-app.get("/api/health", (req, res) => {
+app.get("/api/health", async (req, res) => {
+  let databaseConnected = false;
+
+  if (pool) {
+    try {
+      await pool.query("SELECT 1");
+      databaseConnected = true;
+    } catch (error) {
+      databaseConnected = false;
+    }
+  }
+
   res.json({
     ok: true,
     app: "premium-streaming-dashboard",
-    hermesConfigured: Boolean(HERMES_API_URL && HERMES_API_KEY)
+    hermesConfigured: Boolean(HERMES_API_URL && HERMES_API_KEY),
+    databaseConfigured: Boolean(DATABASE_URL),
+    databaseConnected
   });
 });
 
@@ -608,6 +644,12 @@ Return this JSON shape exactly:
 });
 
 
-app.listen(PORT, () => {
-  console.log(`Premium Streaming Dashboard running on port ${PORT}`);
-});
+initializeDatabase()
+  .catch(error => {
+    console.error("Database initialization failed:", error);
+  })
+  .finally(() => {
+    app.listen(PORT, () => {
+      console.log(`Premium Streaming Dashboard running on port ${PORT}`);
+    });
+  });
