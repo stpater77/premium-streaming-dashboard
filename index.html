@@ -472,7 +472,7 @@
         <h1>Pick the right thing faster.</h1>
         <p class="lede">
           A customizable premium streaming picker for services you already pay for.
-          Choose mood, time, energy, service, format, and intensity. The page suggests
+          Choose mood, time, service, format, intensity, live category, and timing. The page suggests
           a best pick, backups, comfort watches, and wildcard options.
         </p>
       </div>
@@ -506,6 +506,24 @@
         </div>
 
         <div class="control">
+          <label for="liveCategorySelect">Live Category</label>
+          <select id="liveCategorySelect">
+            <option value="any" selected>Any Live</option>
+            <option value="NFL">NFL</option>
+            <option value="NBA">NBA</option>
+            <option value="MLB">MLB</option>
+            <option value="NHL">NHL</option>
+            <option value="College Football">College Football</option>
+            <option value="College Basketball">College Basketball</option>
+            <option value="Soccer">Soccer</option>
+            <option value="Golf">Golf</option>
+            <option value="Tennis">Tennis</option>
+            <option value="Fox News">Fox News</option>
+            <option value="Live Events">Live Events</option>
+          </select>
+        </div>
+
+        <div class="control">
           <label for="moodSelect">Mood</label>
           <select id="moodSelect">
             <option value="any" selected>Any Mood</option>
@@ -533,12 +551,13 @@
         </div>
 
         <div class="control">
-          <label for="energySelect">Energy</label>
-          <select id="energySelect">
-            <option value="any" selected>Any Energy</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
+          <label for="timingSelect">Timing</label>
+          <select id="timingSelect">
+            <option value="any" selected>Any Time</option>
+            <option value="On Now">On Now</option>
+            <option value="Starting Soon">Starting Soon</option>
+            <option value="Tonight">Tonight</option>
+            <option value="This Weekend">This Weekend</option>
           </select>
         </div>
 
@@ -550,6 +569,8 @@
             <option value="Series">Series</option>
             <option value="Documentary">Documentary</option>
             <option value="Stand-Up">Stand-Up</option>
+            <option value="Live TV">Live TV</option>
+            <option value="Live Sports">Live Sports</option>
             <option value="Sports">Sports</option>
           </select>
         </div>
@@ -796,7 +817,7 @@
         time: 35,
         energy: "high",
         intensity: "heavy",
-        bucket: "High-Energy Prestige Pick",
+        bucket: "Prestige Pick",
         why: "Excellent when you want intensity, craft, ambition, and short episodes that still hit hard.",
         avoidIf: "Skip if you want calm background watching.",
         search: "https://www.hulu.com/search?q=The%20Bear"
@@ -940,7 +961,8 @@
         service: document.getElementById("serviceSelect").value,
         mood: document.getElementById("moodSelect").value,
         time: document.getElementById("timeSelect").value,
-        energy: document.getElementById("energySelect").value,
+        liveCategory: document.getElementById("liveCategorySelect").value,
+        timing: document.getElementById("timingSelect").value,
         type: document.getElementById("typeSelect").value,
         intensity: document.getElementById("intensitySelect").value
       };
@@ -951,7 +973,6 @@
 
       if (filters.service === "any" || item.service === filters.service) score += 3;
       if (filters.mood === "any" || item.mood.includes(filters.mood)) score += 3;
-      if (filters.energy === "any" || item.energy === filters.energy) score += 2;
       if (filters.type === "any" || item.type === filters.type) score += 2;
       if (filters.intensity === "any" || item.intensity === filters.intensity) score += 2;
 
@@ -1047,7 +1068,6 @@
         type: item.type,
         mood: item.mood,
         time: item.time,
-        energy: item.energy,
         intensity: item.intensity,
         bucket: item.bucket,
         why: item.why,
