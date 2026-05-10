@@ -657,6 +657,118 @@ app.get("/api/watch-events", async (req, res) => {
 });
 
 
+
+// Dashboard history summary from Postgres.
+app.get("/api/dashboard-history", async (req, res) => {
+  try {
+    if (!pool) {
+      return res.status(500).json({
+        ok: false,
+        error: "Database is not configured."
+      });
+    }
+
+    const [runs, events, topServices, topMoods, perfectPicks, alreadyWatched, notInterested] = await Promise.all([
+      pool.query(
+        `SELECT
+           id,
+           created_at,
+           mode,
+           filters,
+           hermes_response
+         FROM recommendation_runs
+         ORDER BY created_at DESC
+         LIMIT 5`
+      ),
+      pool.query(
+        `SELECT
+           id,
+           created_at,
+           action,
+           title,
+           service,
+           filters,
+           note
+         FROM watch_events
+         ORDER BY created_at DESC
+         LIMIT 10`
+      ),
+      pool.query(
+        `SELECT
+           COALESCE(service, 'Unknown') AS service,
+           COUNT(*)::int AS count
+         FROM watch_events
+         GROUP BY COALESCE(service, 'Unknown')
+         ORDER BY count DESC, service ASC
+         LIMIT 8`
+      ),
+      pool.query(
+        `SELECT
+           COALESCE(filters->>'mood', 'Unknown') AS mood,
+           COUNT(*)::int AS count
+         FROM watch_events
+         GROUP BY COALESCE(filters->>'mood', 'Unknown')
+         ORDER BY count DESC, mood ASC
+         LIMIT 8`
+      ),
+      pool.query(
+        `SELECT
+           title,
+           COALESCE(service, 'Unknown') AS service,
+           COUNT(*)::int AS count,
+           MAX(created_at) AS last_event_at
+         FROM watch_events
+         WHERE action = 'Perfect Pick'
+         GROUP BY title, COALESCE(service, 'Unknown')
+         ORDER BY count DESC, last_event_at DESC
+         LIMIT 10`
+      ),
+      pool.query(
+        `SELECT
+           title,
+           COALESCE(service, 'Unknown') AS service,
+           COUNT(*)::int AS count,
+           MAX(created_at) AS last_event_at
+         FROM watch_events
+         WHERE action = 'Already Watched'
+         GROUP BY title, COALESCE(service, 'Unknown')
+         ORDER BY last_event_at DESC
+         LIMIT 10`
+      ),
+      pool.query(
+        `SELECT
+           title,
+           COALESCE(service, 'Unknown') AS service,
+           COUNT(*)::int AS count,
+           MAX(created_at) AS last_event_at
+         FROM watch_events
+         WHERE action = 'Not Interested'
+         GROUP BY title, COALESCE(service, 'Unknown')
+         ORDER BY last_event_at DESC
+         LIMIT 10`
+      )
+    ]);
+
+    res.json({
+      ok: true,
+      recent_runs: runs.rows,
+      recent_events: events.rows,
+      top_services: topServices.rows,
+      top_moods: topMoods.rows,
+      perfect_picks: perfectPicks.rows,
+      already_watched: alreadyWatched.rows,
+      not_interested: notInterested.rows
+    });
+  } catch (error) {
+    console.error("Failed to build dashboard history:", error);
+    res.status(500).json({
+      ok: false,
+      error: "Failed to build dashboard history."
+    });
+  }
+});
+
+
 // Secure Hermes feedback and memory proxy.
 // Browser sends feedback here. This server asks Hermes to remember durable preferences.
 // The Hermes key is never sent to the browser.
