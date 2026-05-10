@@ -581,6 +581,48 @@
       <div class="grid" id="hermesGrid"></div>
     </section>
 
+    <section class="results" id="watchlistPanel" aria-label="Saved titles and watchlist">
+      <div class="results-head">
+        <div>
+          <h2>Saved Titles & Watchlist</h2>
+          <p class="summary" id="watchlistStatus">Saved titles from your feedback buttons.</p>
+        </div>
+        <button id="refreshWatchlistButton">Refresh Watchlist</button>
+      </div>
+
+      <div class="history-grid">
+        <article class="history-card">
+          <h3>Liked Titles</h3>
+          <div id="likedTitlesList" class="history-list"></div>
+        </article>
+
+        <article class="history-card">
+          <h3>Watched Titles</h3>
+          <div id="watchedTitlesList" class="history-list"></div>
+        </article>
+
+        <article class="history-card">
+          <h3>Not Interested</h3>
+          <div id="rejectedTitlesList" class="history-list"></div>
+        </article>
+
+        <article class="history-card">
+          <h3>More Like This</h3>
+          <div id="referenceTitlesList" class="history-list"></div>
+        </article>
+
+        <article class="history-card">
+          <h3>Too Heavy</h3>
+          <div id="tooHeavyTitlesList" class="history-list"></div>
+        </article>
+
+        <article class="history-card">
+          <h3>Too Long</h3>
+          <div id="tooLongTitlesList" class="history-list"></div>
+        </article>
+      </div>
+    </section>
+
     <section class="results" id="historyPanel" aria-label="Dashboard history">
       <div class="results-head">
         <div>
@@ -1187,6 +1229,59 @@
         return value;
       }
     }
+
+
+    function renderSavedTitleList(containerId, items, emptyText) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      if (!items || !items.length) {
+        container.innerHTML = `<div class="history-item">${emptyText}</div>`;
+        return;
+      }
+
+      container.innerHTML = items.map(item => `
+        <div class="history-item">
+          <strong>${item.title}</strong>
+          <span class="history-meta">
+            ${item.service || "Unknown service"}
+            ${item.type ? ` · ${item.type}` : ""}
+            ${item.updated_at ? ` · ${formatDate(item.updated_at)}` : ""}
+          </span>
+          ${item.notes ? `<div class="history-meta">${item.notes}</div>` : ""}
+        </div>
+      `).join("");
+    }
+
+    async function loadSavedTitles() {
+      const status = document.getElementById("watchlistStatus");
+
+      try {
+        status.textContent = "Loading saved titles from Postgres...";
+
+        const response = await fetch("/api/saved-titles");
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+          status.textContent = "Could not load saved titles.";
+          return;
+        }
+
+        const grouped = data.grouped || {};
+
+        renderSavedTitleList("likedTitlesList", grouped.liked, "No liked titles yet.");
+        renderSavedTitleList("watchedTitlesList", grouped.watched, "No watched titles yet.");
+        renderSavedTitleList("rejectedTitlesList", grouped.rejected, "No rejected titles yet.");
+        renderSavedTitleList("referenceTitlesList", grouped.reference, "No reference titles yet.");
+        renderSavedTitleList("tooHeavyTitlesList", grouped.too_heavy, "No too-heavy titles yet.");
+        renderSavedTitleList("tooLongTitlesList", grouped.too_long, "No too-long titles yet.");
+
+        status.textContent = `Loaded ${data.count || 0} saved title(s) from Postgres.`;
+      } catch (error) {
+        status.textContent = "Saved titles request failed.";
+      }
+    }
+
 
     async function loadDashboardHistory() {
       const status = document.getElementById("historyStatus");
