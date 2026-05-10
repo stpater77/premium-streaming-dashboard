@@ -30,6 +30,26 @@ async function initializeDatabase() {
   console.log("Postgres schema initialized.");
 }
 
+async function saveRecommendationRun(mode, filters, localMemory, hermesResponse) {
+  if (!pool) {
+    return null;
+  }
+
+  const result = await pool.query(
+    `INSERT INTO recommendation_runs (mode, filters, local_memory, hermes_response)
+     VALUES ($1, $2::jsonb, $3::jsonb, $4::jsonb)
+     RETURNING id, created_at`,
+    [
+      mode,
+      JSON.stringify(filters || {}),
+      JSON.stringify(localMemory || {}),
+      JSON.stringify(hermesResponse || {})
+    ]
+  );
+
+  return result.rows[0];
+}
+
 
 function fetchWithTimeout(url, options = {}, timeoutMs = 90000) {
   const controller = new AbortController();
@@ -300,10 +320,26 @@ Return this JSON shape exactly:
       parsed = null;
     }
 
+    let savedRun = null;
+    try {
+      savedRun = await saveRecommendationRun("deep", filters, localMemory, {
+        recommendation: parsed,
+        raw_response: raw,
+        hermes_response_shape: {
+          id: chatData?.id || null,
+          model: chatData?.model || null,
+          choices_count: Array.isArray(chatData?.choices) ? chatData.choices.length : null
+        }
+      });
+    } catch (dbError) {
+      console.error("Failed to save deep recommendation run:", dbError);
+    }
+
     return res.json({
       ok: true,
       recommendation: parsed,
       raw_response: raw,
+      saved_run: savedRun,
       hermes_response_shape: {
         id: chatData?.id || null,
         model: chatData?.model || null,
@@ -471,11 +507,27 @@ Return this JSON shape exactly:
       parsed = null;
     }
 
+    let savedRun = null;
+    try {
+      savedRun = await saveRecommendationRun("fast", filters, localMemory, {
+        recommendation: parsed,
+        raw_response: raw,
+        hermes_response_shape: {
+          id: chatData?.id || null,
+          model: chatData?.model || null,
+          choices_count: Array.isArray(chatData?.choices) ? chatData.choices.length : null
+        }
+      });
+    } catch (dbError) {
+      console.error("Failed to save fast recommendation run:", dbError);
+    }
+
     return res.json({
       ok: true,
       mode: "fast",
       recommendation: parsed,
       raw_response: raw,
+      saved_run: savedRun,
       hermes_response_shape: {
         id: chatData?.id || null,
         model: chatData?.model || null,
