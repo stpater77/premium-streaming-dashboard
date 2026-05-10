@@ -255,7 +255,9 @@ Use Sean's selected filter values to find strong premium streaming recommendatio
 
 Important constraints:
 - Do not claim you have direct access to Sean's Netflix, Hulu, Prime Video, Max, Disney+, Apple TV+, Paramount+, Peacock, YouTube TV, or other paid accounts.
-- Use public web/search capability when available to identify likely matching titles.
+- If service is YouTube TV or type is Live TV / Live Sports, treat the request as a live-guide helper and be explicit that Sean must verify the live guide in his account.
+- Use liveCategory and timing to guide recommendations.
+- Use public web/search capability when available to identify likely matching titles or live events.
 - Prefer titles that appear to be available on the selected streaming service.
 - For every recommendation, include service_url when you can find a direct official streaming-service title page.
 - If you cannot find a direct official title page, include the best official service search URL for that title.
@@ -480,7 +482,12 @@ Rules:
 - If you know or can quickly infer a direct official service page, include it in service_url.
 - If not, use an official service search URL for the title.
 - Do not claim direct access to Sean's private streaming accounts.
-- Availability wording must be cautious: say "not verified", "service search link provided", or "check account availability".
+- If service is YouTube TV or type is Live TV / Live Sports, treat the request as a live-guide helper.
+- For YouTube TV live requests, do not claim to know Sean's live YouTube TV guide.
+- Use liveCategory and timing to suggest channels, search terms, or likely places to check.
+- If liveCategory is Fox News, suggest opening YouTube TV and checking/searching Fox News.
+- If liveCategory is NHL or Soccer, suggest relevant live sports checks and YouTube TV search/open actions.
+- Availability wording must be cautious: say "not verified", "check your YouTube TV live guide", "service search link provided", or "check account availability".
 - Use Hermes long-term memory if available.
 - If you infer a durable user preference, include it in memory_to_save.
 - Return JSON only. No markdown. No surrounding explanation.
