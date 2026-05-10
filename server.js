@@ -870,6 +870,98 @@ app.get("/api/saved-titles", async (req, res) => {
 });
 
 
+
+// Delete a saved title / watchlist item.
+app.delete("/api/saved-titles/:id", async (req, res) => {
+  try {
+    if (!pool) {
+      return res.status(500).json({
+        ok: false,
+        error: "Database is not configured."
+      });
+    }
+
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid saved title id."
+      });
+    }
+
+    const result = await pool.query(
+      `DELETE FROM saved_titles
+       WHERE id = $1
+       RETURNING id, title, service, status`,
+      [id]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({
+        ok: false,
+        error: "Saved title not found."
+      });
+    }
+
+    res.json({
+      ok: true,
+      deleted: result.rows[0]
+    });
+  } catch (error) {
+    console.error("Failed to delete saved title:", error);
+    res.status(500).json({
+      ok: false,
+      error: "Failed to delete saved title."
+    });
+  }
+});
+
+// Delete a feedback/watch event.
+app.delete("/api/watch-events/:id", async (req, res) => {
+  try {
+    if (!pool) {
+      return res.status(500).json({
+        ok: false,
+        error: "Database is not configured."
+      });
+    }
+
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({
+        ok: false,
+        error: "Invalid watch event id."
+      });
+    }
+
+    const result = await pool.query(
+      `DELETE FROM watch_events
+       WHERE id = $1
+       RETURNING id, action, title, service`,
+      [id]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({
+        ok: false,
+        error: "Watch event not found."
+      });
+    }
+
+    res.json({
+      ok: true,
+      deleted: result.rows[0]
+    });
+  } catch (error) {
+    console.error("Failed to delete watch event:", error);
+    res.status(500).json({
+      ok: false,
+      error: "Failed to delete watch event."
+    });
+  }
+});
+
+
 // Secure Hermes feedback and memory proxy.
 // Browser sends feedback here. This server asks Hermes to remember durable preferences.
 // The Hermes key is never sent to the browser.

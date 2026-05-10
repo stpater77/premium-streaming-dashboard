@@ -444,6 +444,19 @@
       }
     }
 
+  
+    .mini-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .mini-actions button {
+      font-size: 0.8rem;
+      padding: 7px 10px;
+      box-shadow: none;
+    }
+
   </style>
 </head>
 <body>
@@ -906,7 +919,20 @@
 
     function saveMemory(memory) {
       localStorage.setItem(memoryKey, JSON.stringify(memory));
-      renderMemory();
+      document.addEventListener("click", event => {
+      const savedButton = event.target.closest("button[data-delete-saved-title]");
+      if (savedButton) {
+        deleteSavedTitle(savedButton.dataset.deleteSavedTitle);
+        return;
+      }
+
+      const eventButton = event.target.closest("button[data-delete-watch-event]");
+      if (eventButton) {
+        deleteWatchEvent(eventButton.dataset.deleteWatchEvent);
+      }
+    });
+
+    renderMemory();
     }
 
     function getFilters() {
@@ -1240,6 +1266,54 @@
     }
 
 
+
+    async function deleteSavedTitle(id) {
+      if (!id) return;
+      if (!confirm("Delete this saved title from the watchlist?")) return;
+
+      try {
+        const response = await fetch(`/api/saved-titles/${id}`, {
+          method: "DELETE"
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+          alert(`Delete failed: ${JSON.stringify(data, null, 2)}`);
+          return;
+        }
+
+        await loadRecentlyWatched();
+        await loadSavedTitles();
+        await loadDashboardHistory();
+      } catch (error) {
+        alert(`Delete failed: ${String(error)}`);
+      }
+    }
+
+    async function deleteWatchEvent(id) {
+      if (!id) return;
+      if (!confirm("Delete this feedback event from history?")) return;
+
+      try {
+        const response = await fetch(`/api/watch-events/${id}`, {
+          method: "DELETE"
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+          alert(`Delete failed: ${JSON.stringify(data, null, 2)}`);
+          return;
+        }
+
+        await loadDashboardHistory();
+      } catch (error) {
+        alert(`Delete failed: ${String(error)}`);
+      }
+    }
+
+
     function renderSavedTitleList(containerId, items, emptyText) {
       const container = document.getElementById(containerId);
       if (!container) return;
@@ -1258,6 +1332,9 @@
             ${item.updated_at ? ` · ${formatDate(item.updated_at)}` : ""}
           </span>
           ${item.notes ? `<div class="history-meta">${item.notes}</div>` : ""}
+          <div class="mini-actions">
+            <button data-delete-saved-title="${item.id}" class="black">Delete</button>
+          </div>
         </div>
       `).join("");
     }
@@ -1418,7 +1495,7 @@
           "recentEventsList",
           data.recent_events,
           "No recent feedback events yet.",
-          item => `<div class="history-item"><strong>${item.action}: ${item.title}</strong><span class="history-meta">${item.service || "Unknown"} · mood: ${(item.filters && item.filters.mood) || "unknown"} · ${formatDate(item.created_at)}</span></div>`
+          item => `<div class="history-item"><strong>${item.action}: ${item.title}</strong><span class="history-meta">${item.service || "Unknown"} · mood: ${(item.filters && item.filters.mood) || "unknown"} · ${formatDate(item.created_at)}</span><div class="mini-actions"><button data-delete-watch-event="${item.id}" class="black">Delete</button></div></div>`
         );
 
         status.textContent = "History loaded from Postgres.";
