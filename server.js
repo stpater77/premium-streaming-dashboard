@@ -556,6 +556,44 @@ Return this JSON shape exactly:
 });
 
 
+
+// Read recent recommendation runs from Postgres.
+app.get("/api/recommendation-runs", async (req, res) => {
+  try {
+    if (!pool) {
+      return res.status(500).json({
+        ok: false,
+        error: "Database is not configured."
+      });
+    }
+
+    const result = await pool.query(
+      `SELECT
+         id,
+         created_at,
+         mode,
+         filters,
+         hermes_response
+       FROM recommendation_runs
+       ORDER BY created_at DESC
+       LIMIT 10`
+    );
+
+    res.json({
+      ok: true,
+      count: result.rows.length,
+      runs: result.rows
+    });
+  } catch (error) {
+    console.error("Failed to read recommendation runs:", error);
+    res.status(500).json({
+      ok: false,
+      error: "Failed to read recommendation runs."
+    });
+  }
+});
+
+
 // Secure Hermes feedback and memory proxy.
 // Browser sends feedback here. This server asks Hermes to remember durable preferences.
 // The Hermes key is never sent to the browser.
