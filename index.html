@@ -1333,7 +1333,7 @@
           </span>
           ${item.notes ? `<div class="history-meta">${item.notes}</div>` : ""}
           <div class="mini-actions">
-            <button data-delete-saved-title="${item.id}" class="black">Delete</button>
+            <button onclick="deleteSavedTitle(\'${item.id}\')" class="black">Delete</button>
           </div>
         </div>
       `).join("");
@@ -1495,7 +1495,7 @@
           "recentEventsList",
           data.recent_events,
           "No recent feedback events yet.",
-          item => `<div class="history-item"><strong>${item.action}: ${item.title}</strong><span class="history-meta">${item.service || "Unknown"} · mood: ${(item.filters && item.filters.mood) || "unknown"} · ${formatDate(item.created_at)}</span><div class="mini-actions"><button data-delete-watch-event="${item.id}" class="black">Delete</button></div></div>`
+          item => `<div class="history-item"><strong>${item.action}: ${item.title}</strong><span class="history-meta">${item.service || "Unknown"} · mood: ${(item.filters && item.filters.mood) || "unknown"} · ${formatDate(item.created_at)}</span><div class="mini-actions"><button onclick="deleteWatchEvent(\'${item.id}\')" class="black">Delete</button></div></div>`
         );
 
         status.textContent = "History loaded from Postgres.";
